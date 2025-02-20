@@ -7,9 +7,6 @@ require 'forwardable'
 module Account
   TRANSACTION_TYPE = %i[debit credit].freeze
 
-  # Custom error class for handling invalid transactions.
-  Error = Class.new(StandardError)
-
   # Represents a financial transaction.
   Transaction = Struct.new(:timestamp, :type, :description, :amount, keyword_init: true) do
     def initialize(*)
@@ -20,8 +17,8 @@ module Account
     private
 
     def validate!
-      raise Error, 'Amount must be positive' unless amount.positive?
-      raise Error, 'Invalid transaction type' unless TRANSACTION_TYPE.include?(type)
+      raise ArgumentError, 'Amount must be positive' unless amount.positive?
+      raise ArgumentError, "Invalid transaction type: #{type}" unless TRANSACTION_TYPE.include?(type)
     end
   end
 
@@ -35,8 +32,8 @@ module Account
         def_delegators :@account, :name, :balance, :transactions, *TRANSACTION_TYPE
         def_delegator :@account, :object_id, :id
 
-        define_method(:initialize) do |name, initial_balance = 0|
-          @account = Base.new(name, initial_balance, increasing_type: typ.downcase.to_sym)
+        define_method(:initialize) do |name|
+          @account = Base.new(name, increasing_type: typ.downcase.to_sym)
         end
       end
     )
@@ -49,11 +46,10 @@ module Account
     # Initializes an account with a name, balance, and increasing transaction type.
     #
     # @param name [String] The account name.
-    # @param initial_balance [Numeric] The starting balance.
     # @param increasing_type [Symbol] The transaction type that increases the balance (:credit or :debit).
-    def initialize(name, initial_balance = 0, increasing_type:)
+    def initialize(name, increasing_type:)
       @name = name
-      @balance = initial_balance
+      @balance = 0
       @transactions = []
       @increasing_type = increasing_type
     end
