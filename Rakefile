@@ -42,6 +42,7 @@ end
 desc "Build #{IMAGE_NAME}"
 task :build do
   sh "podman build -t #{IMAGE_NAME} ."
+  sh "podman system prune -f"
 end
 
 desc "Run #{IMAGE_NAME}"
