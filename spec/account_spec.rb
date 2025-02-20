@@ -6,34 +6,62 @@ require 'time'
 
 describe Account::Transaction do
   let(:valid_timestamp) { Time.now }
+  let(:valid_description) { 'Payment for services' }
 
-  it 'creates a valid transaction' do
-    transaction = described_class.new(timestamp: valid_timestamp, amount: 100, type: :credit)
+  it 'creates a valid transaction with a description' do
+    transaction = described_class.new(
+      timestamp: valid_timestamp,
+      amount: 100,
+      type: :credit,
+      description: valid_description
+    )
     expect(transaction.amount).to eq(100)
     expect(transaction.type).to eq(:credit)
+    expect(transaction.description).to eq(valid_description)
+  end
+
+  it 'allows transactions with an empty description' do
+    transaction = described_class.new(
+      timestamp: valid_timestamp,
+      amount: 100,
+      type: :credit,
+      description: ''
+    )
+    expect(transaction.description).to eq('')
+  end
+
+  it 'allows transactions with a nil description' do
+    transaction = described_class.new(
+      timestamp: valid_timestamp,
+      amount: 100,
+      type: :credit,
+      description: nil
+    )
+    expect(transaction.description).to be_nil
   end
 
   it 'raises an error for a negative amount' do
     expect do
-      described_class.new(timestamp: valid_timestamp, amount: -50, type: :debit)
+      described_class.new(timestamp: valid_timestamp, amount: -50, type: :debit, description: valid_description)
     end.to raise_error(Account::Error, 'Amount must be positive')
   end
 
   it 'raises an error for a zero amount' do
     expect do
-      described_class.new(timestamp: valid_timestamp, amount: 0, type: :credit)
+      described_class.new(timestamp: valid_timestamp, amount: 0, type: :credit, description: valid_description)
     end.to raise_error(Account::Error, 'Amount must be positive')
   end
 
   it 'raises an error for an invalid transaction type' do
     expect do
-      described_class.new(timestamp: valid_timestamp, amount: 50, type: :refund)
+      described_class.new(timestamp: valid_timestamp, amount: 50, type: :refund, description: valid_description)
     end.to raise_error(Account::Error, 'Invalid transaction type')
   end
 
   it 'handles very large transaction amounts' do
     trillion = 1_000_000_000_000
-    transaction = described_class.new(timestamp: valid_timestamp, amount: trillion, type: :credit)
+    transaction = described_class.new(timestamp: valid_timestamp, amount: trillion, type: :credit,
+                                      description: valid_description)
     expect(transaction.amount).to eq(trillion)
   end
 end
@@ -119,4 +147,3 @@ describe Account::DebitNormal do
     expect { debit_account.credit(time, 0) }.to raise_error(Account::Error, 'Amount must be positive')
   end
 end
-
