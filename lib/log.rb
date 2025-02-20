@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Log provides simple file-based logging with timestamped entries.
 class Log
   def initialize(filename)
     @logfile = File.open(filename, mode: 'w')
