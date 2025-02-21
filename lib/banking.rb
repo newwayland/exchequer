@@ -4,33 +4,47 @@ require 'securerandom'
 require_relative 'account'
 require_relative 'log'
 
-# Banking module provides functionality for managing bank accounts,
-# handling transactions, and authorizing access to accounts.
+# Banking module provides a comprehensive banking simulation system with support for
+# account management, transactions, and time-based operations. It implements a
+# message-based architecture for handling banking operations securely.
+#
+# @example Creating a new bank and performing operations
+#   bank = Banking::DepositSystem.new('MyBank', Time.now, logger)
+#   account = bank.create_account(name: 'John Doe', initial_balance: 1000)
+#   bank.transfer(from: account, to: other_account, amount: 500)
+#
+# @api public
 module Banking
-  # Error raised when an invalid account is accessed.
+  # Raised when attempting to access an invalid or non-existent account
   class InvalidAccount < StandardError; end
 
-  # DepositSystem manages bank accounts, transactions, and maintains system time.
+  # DepositSystem manages bank accounts and provides core banking operations.
+  # It maintains account balances, processes transfers, and tracks transaction history.
+  #
+  # @api public
   class DepositSystem
     attr_reader :name, :accounts, :current_time
 
-    # Initializes a DepositSystem instance.
+    # Initializes a new banking system instance
     #
-    # @param name [String] The name of the bank.
-    # @param simulation_time [Time] The current simulated time.
+    # @param name [String] the name of the banking system
+    # @param simulation_time [Time] the initial system time
+    # @param logger [Log] the logger instance for system events
+    #
+    # @api public
     def initialize(name, simulation_time, logger)
       @name = name
       @current_time = simulation_time
       @logger = logger
-
-      # Default proc raises an error if an invalid account ID is accessed.
       @accounts = Hash.new { |_, key| raise InvalidAccount, "Account Number not found: #{key}" }
     end
 
-    # Advances the system time.
+    # Updates the system time to a new point in time
     #
-    # @param new_time [Time] The new time to advance to.
-    # @raise [ArgumentError] If new_time is nil or earlier than the current time.
+    # @param new_time [Time] the time to advance to
+    # @raise [ArgumentError] if new_time is nil or earlier than current time
+    #
+    # @api public
     def advance_time(new_time)
       raise ArgumentError, 'New time must be provided' if new_time.nil?
       raise ArgumentError, 'Time cannot move backwards' if new_time < @current_time
@@ -39,12 +53,14 @@ module Banking
       log_event("Clock advanced to #{@current_time}")
     end
 
-    # Creates a new account.
+    # Creates a new bank account
     #
-    # @param name [String] The account holder's name.
-    # @param initial_balance [Numeric] The starting balance of the account.
-    # @return [String] The account ID.
-    # @raise [ArgumentError] If the account name is blank.
+    # @param name [String] the account holder's name
+    # @param initial_balance [Numeric] optional initial deposit amount
+    # @return [String] the unique account identifier
+    # @raise [ArgumentError] if name is blank
+    #
+    # @api public
     def create_account(name:, initial_balance: 0)
       raise ArgumentError, 'Account name cannot be blank' if name.to_s == ''
 
@@ -55,14 +71,17 @@ module Banking
       account.id
     end
 
-    # Transfers money between accounts.
+    # Transfers money between accounts
     #
-    # @param from [String] The source account ID.
-    # @param to [String] The destination account ID.
-    # @param amount [Numeric] The transfer amount.
-    # @param reference [String] A reference note for the transfer.
-    # @return [Boolean] True if the transfer is successful.
-    # @raise [ArgumentError] If the source and destination are the same.
+    # @param from [String] source account ID
+    # @param to [String] destination account ID
+    # @param amount [Numeric] amount to transfer
+    # @param reference [String] optional transfer reference note
+    # @return [Boolean] true if transfer succeeds
+    # @raise [ArgumentError] if source and destination are same
+    # @raise [InvalidAccount] if either account doesn't exist
+    #
+    # @api public
     def transfer(from:, to:, amount:, reference: '')
       raise ArgumentError, 'Source and destination accounts cannot be the same' if from == to
 
@@ -79,58 +98,73 @@ module Banking
       raise
     end
 
-    # Retrieves the balance of an account.
+    # Retrieves current balance of an account
     #
-    # @param account_id [String] The account ID.
-    # @return [Numeric] The account balance.
+    # @param account_id [String] the account to query
+    # @return [Numeric] the current balance
+    # @raise [InvalidAccount] if account doesn't exist
+    #
+    # @api public
     def balance(account_id)
       @accounts[account_id].balance
     end
 
-    # Retrieves the transactions of an account.
+    # Retrieves transaction history for an account
     #
-    # @param account_id [String] The account ID.
-    # @return [Array<Transaction>] The list of transactions.
+    # @param account_id [String] the account to query
+    # @return [Array<Transaction>] list of transactions in chronological order
+    # @raise [InvalidAccount] if account doesn't exist
+    #
+    # @api public
     def transactions(account_id)
       @accounts[account_id].transactions
     end
 
-    # Retrieves the name associated with an account.
+    # Retrieves the name associated with an account
     #
-    # @param account_id [String] The account ID.
-    # @return [String] The account holder's name.
+    # @param account_id [String] the account to query
+    # @return [String] the account holder's name
+    # @raise [InvalidAccount] if account doesn't exist
+    #
+    # @api public
     def account_name(account_id)
       @accounts[account_id].name
     end
 
     private
 
-    # Handles the debit operation for the source account during a transfer.
+    # Processes debit operation for source account during transfer
     #
-    # @param source [Account] The source account.
-    # @param destination_name [String] The name of the destination account.
-    # @param amount [Numeric] The transfer amount.
-    # @param reference [String] A reference note for the transfer.
+    # @param source [Account] source account
+    # @param destination_name [String] name of destination account
+    # @param amount [Numeric] transfer amount
+    # @param reference [String] transfer reference
+    #
+    # @api private
     def source_transfer(source, destination_name, amount, reference)
       description = "Transfer to #{destination_name} - #{reference}"
       source.debit(@current_time, amount, description)
     end
 
-    # Handles the credit operation for the destination account during a transfer.
+    # Processes credit operation for destination account during transfer
     #
-    # @param destination [Account] The destination account.
-    # @param source_name [String] The name of the source account.
-    # @param amount [Numeric] The transfer amount.
-    # @param reference [String] A reference note for the transfer.
+    # @param destination [Account] destination account
+    # @param source_name [String] name of source account
+    # @param amount [Numeric] transfer amount
+    # @param reference [String] transfer reference
+    #
+    # @api private
     def destination_transfer(destination, source_name, amount, reference)
       description = "Bank credit from #{source_name} - #{reference}"
       destination.credit(@current_time, amount, description)
     end
 
-    # Credits an initial balance when an account is created.
+    # Credits initial balance to newly created account
     #
-    # @param destination [Account] The new account.
-    # @param amount [Numeric] The initial balance amount.
+    # @param destination [Account] the new account
+    # @param amount [Numeric] initial balance amount
+    #
+    # @api private
     def credit_initial_balance(destination, amount)
       if amount.positive?
         destination.credit(@current_time, amount, 'Initial balance')
@@ -139,83 +173,138 @@ module Banking
       end
     end
 
-    # Logs an event with a timestamp.
+    # Records an event in the system log
     #
-    # @param message [String] The event message to log.
+    # @param message [String] the event message
+    #
+    # @api private
     def log_event(message)
       @logger.write(@current_time, message)
     end
   end
 
+  # Messages module contains all message types used for bank operations
+  #
+  # @api public
   module Messages
+    # Base class for all banking messages
+    #
+    # @abstract Subclass and implement {#authorized?} to create concrete message types
     class Message
       attr_reader :sender
 
+      # @param sender [Object] the originator of the message
       def initialize(sender:)
         @sender = sender
         Ractor.make_shareable(self)
       end
 
+      # Checks if the message is authorized
+      #
+      # @param auth [Array<String>] list of authorized account IDs
+      # @return [Boolean] true if authorized
+      #
+      # @api public
       def authorized?(_auth)
         raise NotImplementedError, 'Subclasses must implement `authorized?`'
       end
     end
 
+    # Represents the result of processing a banking message
+    #
+    # @api public
     class Result
       attr_reader :status, :data
 
+      # Creates a success result
+      #
+      # @param data [Object] the success data
+      # @return [Result] success result instance
+      #
+      # @api public
       def self.success(data)
         new(:ok, data)
       end
 
+      # Creates an error result
+      #
+      # @param message [String] the error message
+      # @return [Result] error result instance
+      #
+      # @api public
       def self.error(message)
         new(:error, message)
       end
 
+      # @param status [Symbol] :ok or :error
+      # @param data [Object] result data or error message
       def initialize(status, data)
         @status = status.freeze
         @data = data.freeze
       end
 
+      # @return [Boolean] true if status is :ok
       def success?
         status == :ok
       end
 
+      # @return [Array] frozen array of [status, data]
       def to_response
         [@status.freeze, @data.freeze].freeze
       end
     end
 
+    # Mixin for messages that query a specific account
+    #
+    # @api private
     module AccountQuery
       attr_reader :account_id
 
+      # @param account_id [String] the account being queried
       def initialize(account_id:, **kwargs)
         @account_id = account_id
         super(**kwargs)
       end
 
+      # @param auth [Array<String>] authorized account IDs
+      # @return [Boolean] true if authorized for account
       def authorized?(auth)
         auth&.include?(account_id)
       end
     end
 
+    # Message for creating new accounts
+    #
+    # @api public
     class CreateAccount < Message
       attr_reader :name, :initial_balance
 
+      # @param name [String] account holder name
+      # @param initial_balance [Numeric] optional starting balance
       def initialize(name:, initial_balance: 0, **kwargs)
         @name = name
         @initial_balance = initial_balance
         super(**kwargs)
       end
 
+      # Account creation is always authorized
+      #
+      # @return [Boolean] true
       def authorized?(_auth)
         true
       end
     end
 
+    # Message for transferring money between accounts
+    #
+    # @api public
     class Transfer < Message
       attr_reader :from_account, :to_account, :amount, :reference
 
+      # @param from_account [String] source account ID
+      # @param to_account [String] destination account ID
+      # @param amount [Numeric] transfer amount
+      # @param reference [String] optional reference note
       def initialize(from_account:, to_account:, amount:, reference: '', **kwargs)
         @from_account = from_account
         @to_account = to_account
@@ -224,34 +313,60 @@ module Banking
         super(**kwargs)
       end
 
+      # @param auth [Array<String>] authorized account IDs
+      # @return [Boolean] true if authorized for source account
       def authorized?(auth)
         auth&.include?(from_account)
       end
     end
 
+    # Message for querying account balance
+    #
+    # @api public
     class Balance < Message
       include AccountQuery
     end
 
+    # Message for retrieving transaction history
+    #
+    # @api public
     class Transactions < Message
       include AccountQuery
     end
 
+    # Message for advancing system time
+    #
+    # @api public
     class AdvanceTime < Message
       attr_reader :new_time
 
+      # @param new_time [Time] time to advance to
       def initialize(new_time:, **kwargs)
         @new_time = new_time
         super(**kwargs)
       end
 
+      # Time changes are always authorized
+      #
+      # @return [Boolean] true
       def authorized?(_auth)
         true
       end
     end
   end
 
+  # BankOperator processes banking messages in a separate Ractor
+  #
+  # @api public
   class BankOperator
+    # Starts a new bank operator in a separate Ractor
+    #
+    # @param name [String] bank name
+    # @param simulation_time [Time] starting time
+    # @param authorizations [Hash] initial auth mappings
+    # @return [Ractor] the bank operator Ractor
+    #
+    # @api public
     def self.start(name:, simulation_time:, authorizations: {})
       Ractor.new(name, authorizations, simulation_time) do |bank_name, auths, time|
         operator = BankOperator.new(bank_name, auths, time)
@@ -259,31 +374,83 @@ module Banking
       end
     end
 
+    # @param name [String] bank name
+    # @param authorizations [Hash] authorization mappings
+    # @param simulation_time [Time] starting time
     def initialize(name, authorizations, simulation_time)
       @logger = Log.new("log/#{name.downcase.gsub(/\s+/, '_')}.log")
       @bank = DepositSystem.new(name, simulation_time, @logger)
       @message_handler = MessageHandler.new(@bank, authorizations)
     end
 
+    # Runs the message processing loop
+    #
+    # @api private
     def run
       loop do
         message = Ractor.receive
-        break if message == :shutdown
+        break if shutdown?(message)
 
-        result = @message_handler.process(message)
-        begin
-          message.sender.send(result.to_response)
-        rescue NoMethodError
-          @logger.write(@bank.current_time, "Missing sender in: #{message.inspect}")
-          @logger.write(@bank.current_time, result.data)
-        end
+        handle_message(message)
       end
     ensure
+      cleanup
+    end
+
+    private
+
+    # Handles an individual message
+    #
+    # @param message [Message] the message to process
+    # @api private
+    def handle_message(message)
+      result = @message_handler.process(message)
+      send_response(message, result)
+    end
+
+    # Sends response back to message sender
+    #
+    # @param message [Message] the original message
+    # @param result [Result] the processing result
+    # @api private
+    def send_response(message, result)
+      message.sender.send(result.to_response)
+    rescue NoMethodError
+      log_missing_sender(message, result)
+    end
+
+    # Logs error when sender is missing
+    #
+    # @param message [Message] the message with missing sender
+    # @param result [Result] the processing result
+    # @api private
+    def log_missing_sender(message, result)
+      @logger.write(@bank.current_time, "Missing sender in: #{message.inspect}")
+      @logger.write(@bank.current_time, result.data)
+    end
+
+    # Checks if message is shutdown signal
+    #
+    # @param message [Object] the message to check
+    # @return [Boolean] true if shutdown signal
+    # @api private
+    def shutdown?(message)
+      message == :shutdown
+    end
+
+    # Performs cleanup operations
+    #
+    # @api private
+    def cleanup
       @logger.close
     end
   end
 
+  # Handles processing of banking messages
+  #
+  # @api private
   class MessageHandler
+    # Maps message types to handler methods
     MESSAGE_HANDLERS = {
       Messages::CreateAccount => :handle_create_account,
       Messages::Transfer => :handle_transfer,
@@ -292,12 +459,18 @@ module Banking
       Messages::AdvanceTime => :handle_advance_time
     }.freeze
 
+    # @param bank [DepositSystem] the banking system
+    # @param authorizations [Hash] authorization mappings
     def initialize(bank, authorizations)
       @bank = bank
       @authorizations = authorizations
       authorizations.default_proc = ->(hash, key) { hash[key] = [] }
     end
 
+    # Processes an incoming message
+    #
+    # @param message [Message] the message to process
+    # @return [Result] the processing result
     def process(message)
       auth = authorizations[message.sender]
       return Messages::Result.error('Unauthorized') unless message.authorized?(auth)
@@ -314,26 +487,31 @@ module Banking
 
     attr_reader :bank, :authorizations
 
+    # @api private
     def handle_create_account(message)
       account_id = bank.create_account(name: message.name, initial_balance: message.initial_balance)
       authorizations[message.sender] << account_id
       Messages::Result.success(account_id)
     end
 
+    # @api private
     def handle_transfer(message)
       bank.transfer(from: message.from_account, to: message.to_account, amount: message.amount,
                     reference: message.reference)
       Messages::Result.success(true)
     end
 
+    # @api private
     def handle_balance(message)
       Messages::Result.success(bank.balance(message.account_id))
     end
 
+    # @api private
     def handle_transactions(message)
       Messages::Result.success(bank.transactions(message.account_id))
     end
 
+    # @api private
     def handle_advance_time(message)
       bank.advance_time(message.new_time)
       Messages::Result.success(bank.current_time)
