@@ -22,21 +22,24 @@ module Account
     end
   end
 
-  # Dynamically creates CreditNormal and DebitNormal account classes.
-  TRANSACTION_TYPE.each do |typ|
-    klass_name = "#{typ.capitalize}Normal"
-    const_set(
-      klass_name,
-      Class.new do
-        extend Forwardable
-        def_delegators :@account, :name, :balance, :transactions, *TRANSACTION_TYPE
-        def_delegator :@account, :object_id, :id
+  class CreditNormal
+    extend Forwardable
+    def_delegators :@account, :name, :balance, :transactions, *TRANSACTION_TYPE
+    def_delegator :@account, :object_id, :id
 
-        define_method(:initialize) do |name|
-          @account = Base.new(name, increasing_type: typ.downcase.to_sym)
-        end
-      end
-    )
+    def initialize(name)
+      @account = Base.new(name, increasing_type: :credit)
+    end
+  end
+
+  class DebitNormal
+    extend Forwardable
+    def_delegators :@account, :name, :balance, :transactions, *TRANSACTION_TYPE
+    def_delegator :@account, :object_id, :id
+
+    def initialize(name)
+      @account = Base.new(name, increasing_type: :debit)
+    end
   end
 
   # Base account class that maintains balance and transaction history.
@@ -54,11 +57,12 @@ module Account
       @increasing_type = increasing_type
     end
 
-    # Dynamically defines credit and debit methods.
-    TRANSACTION_TYPE.each do |typ|
-      define_method(typ) do |time, amt, desc = nil|
-        apply_transaction(Transaction.new(timestamp: time, amount: amt, type: typ, description: desc))
-      end
+    def credit(time, amt, desc = nil)
+      apply_transaction(Transaction.new(timestamp: time, amount: amt, type: :credit, description: desc))
+    end
+
+    def debit(time, amt, desc = nil)
+      apply_transaction(Transaction.new(timestamp: time, amount: amt, type: :debit, description: desc))
     end
 
     private
