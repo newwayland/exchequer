@@ -39,7 +39,7 @@ module Banking
       log_event("Clock advanced to #{@current_time}")
     end
 
-    # Creates a new bank account
+    # Creates a new credit normal bank account (standard account)
     #
     # @param name [String] the account holder's name
     # @param initial_balance [Numeric] optional initial deposit amount
@@ -50,11 +50,21 @@ module Banking
     def create_account(name:, initial_balance: 0)
       raise ArgumentError, 'Account name cannot be blank' if name.to_s == ''
 
-      account = Account::CreditNormal.new(name)
-      @accounts[account.id] = account
-      credit_initial_balance(account, initial_balance)
-      log_event("Account created: #{account.id} - #{name}")
-      account.id
+      create_specific_account(Account::CreditNormal, name, initial_balance)
+    end
+
+    # Creates a new debit normal bank account (mirror account)
+    #
+    # @param name [String] the account holder's name
+    # @param initial_balance [Numeric] optional initial deposit amount
+    # @return [String] the unique account identifier
+    # @raise [ArgumentError] if name is blank
+    #
+    # @api public
+    def create_mirror_account(name:, initial_balance: 0)
+      raise ArgumentError, 'Account name cannot be blank' if name.to_s == ''
+
+      create_specific_account(Account::DebitNormal, "#{name} (M)", -initial_balance)
     end
 
     # Transfers money between accounts
@@ -118,6 +128,23 @@ module Banking
     end
 
     private
+
+    # Creates a specific type of account
+    #
+    # @param account_class [Class] the account class to instantiate
+    # @param name [String] the account holder's name
+    # @param initial_balance [Numeric] initial deposit amount
+    # @return [String] the unique account identifier
+    # @raise [ArgumentError] if name is blank
+    #
+    # @api private
+    def create_specific_account(account_class, name, initial_balance)
+      account = account_class.new(name)
+      @accounts[account.id] = account
+      credit_initial_balance(account, initial_balance)
+      log_event("Account created: #{account.id} - #{name}")
+      account.id
+    end
 
     # Processes debit operation for source account during transfer
     #

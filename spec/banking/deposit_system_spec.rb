@@ -11,7 +11,7 @@ RSpec.shared_examples 'an invalid account error' do
 end
 
 describe Banking::DepositSystem do
-  let(:fake_logger) { instance_double(Log, write: nil) }
+  let(:fake_logger) { instance_double(Log, write: nil, close: nil) }
   let(:initial_time) { Time.new(2024, 1, 1, 9, 0) }
   let(:bank) { described_class.new('Test Bank', initial_time, fake_logger) }
 
@@ -69,6 +69,65 @@ describe Banking::DepositSystem do
     context 'with invalid inputs' do
       it 'raises error for blank name' do
         expect { bank.create_account(name: '') }
+          .to raise_error(ArgumentError, 'Account name cannot be blank')
+      end
+    end
+  end
+
+  describe '#create_mirror_account' do
+    context 'when creating an account with an initial balance' do
+      let(:account_id) { bank.create_mirror_account(name: 'Test Account', initial_balance: 1000) }
+
+      it 'creates an account successfully' do
+        expect(bank.balance(account_id)).to eq(1000)
+      end
+
+      it 'sets the correct account name' do
+        expect(bank.account_name(account_id)).to eq('Test Account (M)')
+      end
+
+      it 'creates an initial balance transaction' do
+        transactions = bank.transactions(account_id)
+        expect(transactions.size).to eq(1)
+        expect(transactions.first.to_h).to include(
+          timestamp: initial_time,
+          type: :debit,
+          amount: 1000,
+          description: 'Initial balance'
+        )
+      end
+    end
+
+    context 'when creating an account with zero initial balance' do
+      let(:account_id) { bank.create_mirror_account(name: 'Zero Account') }
+
+      it 'defaults to a zero balance' do
+        expect(bank.balance(account_id)).to eq(0)
+      end
+
+      it 'creates no initial transaction' do
+        expect(bank.transactions(account_id)).to be_empty
+      end
+    end
+
+    context 'when creating an account with a negative balance' do
+      let(:account_id) { bank.create_mirror_account(name: 'Test Account', initial_balance: -1000) }
+
+      it 'creates an initial balance transaction' do
+        transactions = bank.transactions(account_id)
+        expect(transactions.size).to eq(1)
+        expect(transactions.first.to_h).to include(
+          timestamp: initial_time,
+          type: :credit,
+          amount: 1000,
+          description: 'Initial balance'
+        )
+      end
+    end
+
+    context 'with invalid inputs' do
+      it 'raises error for blank name' do
+        expect { bank.create_mirror_account(name: '') }
           .to raise_error(ArgumentError, 'Account name cannot be blank')
       end
     end

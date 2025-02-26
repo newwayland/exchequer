@@ -36,6 +36,18 @@ describe Banking::Messages do
     end
   end
 
+  describe Banking::Messages::CreateMirrorAccount do
+    let(:message) { described_class.new(sender: sender, name: 'John Doe', initial_balance: 100) }
+
+    it 'is Ractor shareable' do
+      expect(Ractor).to be_shareable(message)
+    end
+
+    it 'is always authorized' do
+      expect(message.authorized?(auth)).to be true
+    end
+  end
+
   describe Banking::Messages::Transfer do
     let(:message) do
       described_class.new(sender: sender, from_account: 1, to_account: 2, amount: 50, reference: 'Test')

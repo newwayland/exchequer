@@ -74,9 +74,39 @@ describe Banking::BankOperator do
     end
   end
 
+  describe 'mirror account creation' do
+    it 'successfully creates an account with initial balance' do
+      message = Banking::Messages::CreateMirrorAccount.new(
+        sender: client,
+        name: 'John Doe',
+        initial_balance: 1000
+      )
+
+      operator.send(message)
+      status, account_id = client.take
+
+      expect(status).to eq(:ok)
+      expect(account_id).to be_a(Integer)
+    end
+
+    it 'fails to create account with blank name' do
+      message = Banking::Messages::CreateMirrorAccount.new(
+        sender: client,
+        name: '',
+        initial_balance: 1000
+      )
+
+      operator.send(message)
+      status, error = client.take
+
+      expect(status).to eq(:error)
+      expect(error).to eq('Account name cannot be blank')
+    end
+  end
+
   describe 'money transfers' do
     let(:source_account) do
-      message = Banking::Messages::CreateAccount.new(
+      message = Banking::Messages::CreateMirrorAccount.new(
         sender: client,
         name: 'Source Account',
         initial_balance: 1000
@@ -122,7 +152,7 @@ describe Banking::BankOperator do
       status, balance = client.take
 
       expect(status).to eq(:ok)
-      expect(balance).to eq(500)
+      expect(balance).to eq(1500)
 
       # Verify destination account balance
       balance_message = Banking::Messages::Balance.new(
@@ -251,6 +281,16 @@ describe Banking::BankOperator do
       expect(transactions.length).to eq(1)
       expect(transactions.first.amount).to eq(1000)
       expect(transactions.first.description).to eq('Initial balance')
+    end
+  end
+
+  describe 'institution regisration' do
+    it 'accepts directory registration' do
+      message = Banking::Messages::InstitutionsDirectory.new(
+        directory: { main: Ractor.current }
+      )
+
+      expect { operator.send(message) }.not_to raise_error
     end
   end
 end

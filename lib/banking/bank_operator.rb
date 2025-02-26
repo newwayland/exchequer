@@ -37,7 +37,8 @@ module Banking
         message = Ractor.receive
         break if shutdown?(message)
 
-        handle_message(message)
+        handle_broadcast_message(message) ||
+          handle_response_message(message)
       end
     ensure
       cleanup
@@ -45,11 +46,24 @@ module Banking
 
     private
 
+    # Handles any broadcast messages
+    #
+    # @param message [Message] the message to process
+    # @api private
+    def handle_broadcast_message(message)
+      if message.instance_of?(Messages::InstitutionsDirectory)
+        @institutions = message.directory
+      else
+        @logger.write(@bank.current_time, message.class)
+        false
+      end
+    end
+
     # Handles an individual message
     #
     # @param message [Message] the message to process
     # @api private
-    def handle_message(message)
+    def handle_response_message(message)
       result = @message_handler.process(message)
       send_response(message, result)
     end
@@ -99,6 +113,7 @@ module Banking
     # Maps message types to handler methods
     MESSAGE_HANDLERS = {
       Messages::CreateAccount => :handle_create_account,
+      Messages::CreateMirrorAccount => :handle_create_mirror_account,
       Messages::Transfer => :handle_transfer,
       Messages::Balance => :handle_balance,
       Messages::Transactions => :handle_transactions,
@@ -109,6 +124,7 @@ module Banking
     # @param authorizations [Hash] authorization mappings
     def initialize(bank, authorizations)
       @bank = bank
+      @institutions = {}
       @authorizations = authorizations
       authorizations.default_proc = ->(hash, key) { hash[key] = [] }
     end
@@ -136,6 +152,13 @@ module Banking
     # @api private
     def handle_create_account(message)
       account_id = bank.create_account(name: message.name, initial_balance: message.initial_balance)
+      authorizations[message.sender] << account_id
+      Messages::Result.success(account_id)
+    end
+
+    # @api private
+    def handle_create_mirror_account(message)
+      account_id = bank.create_mirror_account(name: message.name, initial_balance: message.initial_balance)
       authorizations[message.sender] << account_id
       Messages::Result.success(account_id)
     end

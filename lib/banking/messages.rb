@@ -28,6 +28,19 @@ module Banking
       end
     end
 
+    # Message for registering the institutional directory
+    #
+    # @api public
+    class InstitutionsDirectory
+      attr_reader :directory
+
+      # @param directory [Hash] Hash of running Ractors
+      def initialize(directory:)
+        @directory = directory
+        Ractor.make_shareable(self)
+      end
+    end
+
     # Represents the result of processing a banking message
     #
     # @api public
@@ -111,6 +124,12 @@ module Banking
       def authorized?(_auth)
         true
       end
+    end
+
+    # Message for creating new mirror accounts
+    #
+    # @api public
+    class CreateMirrorAccount < CreateAccount
     end
 
     # Message for transferring money between accounts
