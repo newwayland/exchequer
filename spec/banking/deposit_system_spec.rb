@@ -11,7 +11,7 @@ RSpec.shared_examples 'an invalid account error' do
 end
 
 describe Banking::DepositSystem do
-  let(:fake_logger) { instance_double(Log, write: nil, close: nil) }
+  let(:fake_logger) { instance_double(Log, :<< => nil, close: nil) }
   let(:initial_time) { Time.new(2024, 1, 1, 9, 0) }
   let(:bank) { described_class.new('Test Bank', initial_time, fake_logger) }
 

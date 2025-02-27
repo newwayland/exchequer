@@ -36,7 +36,8 @@ module Banking
       raise ArgumentError, 'Time cannot move backwards' if new_time < @current_time
 
       @current_time = new_time
-      log_event("Clock advanced to #{@current_time}")
+      log_event('Clock advanced')
+      @current_time
     end
 
     # Creates a new credit normal bank account (standard account)
@@ -192,7 +193,7 @@ module Banking
     #
     # @api private
     def log_event(message)
-      @logger.write(@current_time, message)
+      @logger << Log.format(@current_time, message)
     end
   end
 end

@@ -3,8 +3,8 @@
 require 'log'
 
 describe Log do
+  filename = 'fake.log'
   let(:log_io) { StringIO.new }
-  let(:filename) { 'fake.log' }
 
   before do
     # Intercept File.open and return a StringIO instead
@@ -13,30 +13,35 @@ describe Log do
 
   describe '#initialize' do
     it 'opens a log file' do
-      logger = described_class.new(filename)
+      described_class.new(filename)
+      expect(File).to have_received(:open)
       expect(log_io).not_to be_closed
-      logger.close
     end
   end
 
-  describe '#write' do
+  describe '#<<' do
     it 'writes log messages with correct timestamp format' do
       logger = described_class.new(filename)
-      timestamp = Time.new(2025, 2, 17, 8, 30) # Example timestamp
-
-      logger.write(timestamp, 'Test log entry')
-
+      test_string = 'Test entry'
+      logger << test_string
       log_contents = log_io.string
-      expect(log_contents).to match(/\A\d{2}:\w{3} \d{2}:\d{2}: Test log entry\n\z/)
-      logger.close
+      expect(log_contents).to eq(test_string)
+    end
+  end
+
+  describe '.format' do
+    it 'formats log entries correctly' do
+      timestamp = Time.new(2025, 2, 27, 14, 30) # Example fixed timestamp
+      formatted = described_class.format(timestamp, 'Sample log')
+      expect(formatted).to eq("09:Thu 14:30: Sample log\n")
     end
   end
 
   describe '#close' do
-    it 'closes the log file' do
+    it 'closes the logfile' do
       logger = described_class.new(filename)
       logger.close
-      expect(log_io).to be_closed
+      expect { logger << 'Should fail' }.to raise_error(IOError)
     end
   end
 end

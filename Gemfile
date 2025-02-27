@@ -4,6 +4,8 @@ source 'https://rubygems.org'
 
 ruby '~> 3.4.0'
 
+gem 'logger'
+
 group :test, optional: true do
   gem 'rspec'
   gem 'steep'
