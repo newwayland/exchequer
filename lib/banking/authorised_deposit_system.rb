@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'forwardable'
+require 'set'
 
 module Banking
   # Custom error for unauthorised access attempts
@@ -21,6 +22,8 @@ module Banking
 
     # Methods to delegate directly to the underlying DepositSystem
     def_delegators :@deposit_system, :current_time, :advance_time
+
+    attr_reader :institutions
 
     # @param name [String] bank name
     # @param simulation_time [Time] starting time
