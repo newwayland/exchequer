@@ -36,7 +36,8 @@ describe Banking::AuthorisedDepositSystem do
 
     it 'initializes with provided authorisations' do
       initial_auths = { first_customer => Set.new(['account1']) }
-      system = described_class.new(name: bank_name, simulation_time: simulation_time, logger: logger, authorisations: initial_auths)
+      system = described_class.new(name: bank_name, simulation_time: simulation_time, logger: logger,
+                                   authorisations: initial_auths)
       expect(system.instance_variable_get(:@authorisations)).to eq(initial_auths)
     end
   end

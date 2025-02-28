@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'forwardable'
-require 'set'
 
 module Banking
   # Custom error for unauthorised access attempts

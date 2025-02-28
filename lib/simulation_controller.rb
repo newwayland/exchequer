@@ -2,8 +2,8 @@
 
 require 'date'
 require 'logger'
-require 'log'
-require_relative 'banking'
+require_relative 'log'
+require_relative 'institutions'
 
 class SimulationController
   def initialize(duration_days)
@@ -35,14 +35,19 @@ class SimulationController
   end
 
   def register_institutions
-    @institutions[:boe] = Banking::AuthorisedDepositSystem.new(name: 'Bank of England', simulation_time: @simtime, logger: @logger)
-    @institutions[:gbs] = Banking::AuthorisedDepositSystem.new(name: 'Government Banking Service', simulation_time: @simtime, logger: @logger)
+    @institutions[:boe] =
+      Banking::AuthorisedDepositSystem.new(name: 'Bank of England', simulation_time: @simtime, logger: @logger)
+    @institutions[:gbs] =
+      Banking::AuthorisedDepositSystem.new(name: 'Government Banking Service', simulation_time: @simtime,
+                                           logger: @logger)
+    @institutions[:efa] =
+      Institutions::CentralFunds.new(name: 'Exchequer Funds and Accounts', simulation_time: @simtime, logger: @logger)
   end
 
   def distribute_directory
     registration_list = @institutions.clone
-    @institutions.each_value do |institution|
-      institution.update_institutions_directory(registration_list)
+    @institutions.each_value do |inst|
+      inst.update_institutions_directory(registration_list)
     end
   end
 
