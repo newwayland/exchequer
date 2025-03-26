@@ -1,18 +1,26 @@
 # frozen_string_literal: true
 
-require 'forwardable'
-
 module Institutions
   # CentralFunds manages the central government accounts and their
   # operations in the financial simulation.
   # It serves as the primary interface to the NLF deposit system, handling account
   # creation and management for various parts of the Excequer Pyramid.
   class CentralFunds
-    extend Forwardable
+    def current_time(...)
+      @treasury_deposits.current_time(...)
+    end
 
-    # Delegate common operations to the treasury deposits system
-    def_delegators :@treasury_deposits, :current_time, :advance_time, :institutions,
-                   :shutdown
+    def advance_time(...)
+      @treasury_deposits.advance_time(...)
+    end
+
+    def institutions(...)
+      @treasury_deposits.institutions(...)
+    end
+
+    def shutdown(...)
+      @treasury_deposts.shutdown(...)
+    end
 
     # Initialize a new central funds system
     #

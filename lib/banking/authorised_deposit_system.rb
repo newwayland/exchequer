@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'forwardable'
+require 'set'
 
 module Banking
   # Custom error for unauthorised access attempts
@@ -17,10 +17,13 @@ module Banking
   #
   # @api public
   class AuthorisedDepositSystem
-    extend Forwardable
+    def current_time(...)
+      @deposit_system.current_time(...)
+    end
 
-    # Methods to delegate directly to the underlying DepositSystem
-    def_delegators :@deposit_system, :current_time, :advance_time
+    def advance_time(...)
+      @deposit_system.advance_time(...)
+    end
 
     attr_reader :institutions
 

@@ -10,11 +10,11 @@ class SimulationController
     @institutions = {}
     @start_date = next_monday
     @duration_days = duration_days
+    @simtime = timestamp(@start_date, '08:00')
     @logger = Logger.new($stdout)
   end
 
   def run
-    @simtime = timestamp(@start_date, '08:00')
     log_event('Starting simulation')
     register_institutions
     distribute_directory

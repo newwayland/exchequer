@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
-require 'forwardable'
-
 # Log provides simple file-based logging with timestamped entries.
 class Log
-  extend Forwardable
-  def_delegators :@logfile, :close, :<<
+  def close(...)
+    @logfile.close(...)
+  end
+
+  def <<(...)
+    @logfile.<<(...)
+  end
 
   def initialize(filename)
     @logfile = File.open(filename, mode: 'w')
