@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'deposit_system_facade'
+
 module Institutions
   # The ExchequerSweep module implements the Exchequer Pyramid process,
   # consolidating government cash balances at the end of each business day.

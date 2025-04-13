@@ -6,7 +6,7 @@ describe Institutions::CentralFundsSetup do
   let(:boe) do
     instance_double(Banking::AuthorisedDepositSystem, 'BOE', create_account: 'account_id', authorise_entity: nil)
   end
-  let(:efa) { instance_double(Institutions::CentralFunds, 'EFA') }
+  let(:efa) { instance_double(Institutions::ExchequerFundsAndAccounts, 'EFA') }
   let(:cga) { instance_double(Banking::AuthorisedDepositSystem, 'CGA') }
   let(:gbs) { instance_double(Banking::AuthorisedDepositSystem, 'GBS') }
   let(:hmrc) { instance_double(Banking::AuthorisedDepositSystem, 'HMRC') }

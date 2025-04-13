@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+require_relative 'workflows/central_funds_setup'
+require_relative 'workflows/exchequer_sweep'
+
 module Institutions
-  # CentralFunds manages the central government accounts and their
+  # ExchequerFundsAndAccounts manages the central government accounts and their
   # operations in the financial simulation.
   # It serves as the primary interface to the NLF deposit system, handling account
   # creation and management for various parts of the Excequer Pyramid.
-  class CentralFunds
+  class ExchequerFundsAndAccounts
     def current_time(...)
       @treasury_deposits.current_time(...)
     end
@@ -27,7 +30,7 @@ module Institutions
     # @param name [String] the name of the central funds system
     # @param simulation_time [Time] the starting time for the simulation
     # @param logger [Object] logging facility that responds to <<
-    # @return [CentralFunds] a new instance of the central funds system
+    # @return [ExchequerFundsAndAccounts] a new instance of the central funds system
     #
     # @api public
     def initialize(name:, simulation_time:, logger:)
